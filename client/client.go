@@ -1,8 +1,8 @@
 package main
 
 import (
-"log"
-"crypto/tls"
+	"log"
+	"crypto/tls"
 )
 
 func main() {
