@@ -2,55 +2,51 @@ package main
 
 import (
 	"log"
-	"crypto/tls"
-	"net"
-	"bufio"
+	"net/http"
 )
 
+func Run(addr string, sslAddr string, ssl map[string]string) chan error {
+
+	errs := make(chan error)
+
+	// Starting HTTP server
+	go func() {
+		log.Printf("Staring HTTP service on %s ...", addr)
+
+		if err := http.ListenAndServe(addr, nil); err != nil {
+			errs <- err
+		}
+
+	}()
+
+	// Starting HTTPS server
+	go func() {
+		log.Printf("Staring HTTPS service on %s ...", addr)
+		if err := http.ListenAndServeTLS(sslAddr, ssl["cert"], ssl["key"], nil); err != nil {
+			errs <- err
+		}
+	}()
+
+	return errs
+}
+
+func sampleHandler(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write([]byte("This is an example server.\n"))
+}
+
 func main() {
-	log.SetFlags(log.Lshortfile)
+	http.HandleFunc("/", sampleHandler)
 
-	cer, err := tls.LoadX509KeyPair("localhost.crt", "server.key")
-	if err != nil {
-		log.Println(err)
-		return
+	errs := Run(":8081", ":443", map[string]string{
+		"cert": "localhost.crt",
+		"key":  "server.key",
+	})
+
+	// This will run forever until channel receives error
+	select {
+	case err := <-errs:
+		log.Printf("Could not start serving service due to (error: %s)", err)
 	}
 
-	config := &tls.Config{Certificates: []tls.Certificate{cer}}
-	ln, err := tls.Listen("tcp", ":443", config)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	defer ln.Close()
-
-	for {
-		conn, err := ln.Accept()
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-		go handleConnection(conn)
-	}
 }
-
-func handleConnection(conn net.Conn) {
-	defer conn.Close()
-	r := bufio.NewReader(conn)
-	for {
-		msg, err := r.ReadString('\n')
-		if err != nil {
-			log.Println(err)
-			return
-		}
-
-		println(msg)
-
-		n, err := conn.Write([]byte("world\n"))
-		if err != nil {
-			log.Println(n, err)
-			return
-		}
-	}
-}
-
