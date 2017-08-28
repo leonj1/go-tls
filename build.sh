@@ -1,4 +1,4 @@
 #!/bin/bash
 
-go build -o tls-server server/server.go
+go build -o server server.go
 
