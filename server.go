@@ -1,20 +1,56 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
-	"html"
 	"log"
+	"crypto/tls"
+	"net"
+	"bufio"
 )
 
 func main() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
-	})
+	log.SetFlags(log.Lshortfile)
 
-	http.HandleFunc("/hi", func(w http.ResponseWriter, r *http.Request){
-		fmt.Fprintf(w, "Hi")
-	})
+	cer, err := tls.LoadX509KeyPair("localhost.crt", "server.key")
+	if err != nil {
+		log.Println(err)
+		return
+	}
 
-	log.Fatal(http.ListenAndServe(":8081", nil))
+	config := &tls.Config{Certificates: []tls.Certificate{cer}}
+	ln, err := tls.Listen("tcp", ":443", config)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer ln.Close()
+
+	for {
+		conn, err := ln.Accept()
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		go handleConnection(conn)
+	}
 }
+
+func handleConnection(conn net.Conn) {
+	defer conn.Close()
+	r := bufio.NewReader(conn)
+	for {
+		msg, err := r.ReadString('\n')
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		println(msg)
+
+		n, err := conn.Write([]byte("world\n"))
+		if err != nil {
+			log.Println(n, err)
+			return
+		}
+	}
+}
+
