@@ -111,14 +111,14 @@ func main() {
 		MaxBackups: 3,
 		MaxAge:     3, //days
 	})
-	// Concurrent HashMap
+		// Concurrent HashMap
 	bar := cmap.New()
 	foo := &MyConcurrentMap{cMap: &bar}
 	s := mux.NewRouter()
 	s.HandleFunc("/messages", foo.addHandler).Methods("POST")
 	s.HandleFunc("/messages/{hash}", foo.secureHandler).Methods("GET")
 
-	log.Printf("Staring HTTPS service on %s ...", ":443")
+	log.Printf("Staring HTTPS service on %s .../n", ":443")
 	if err := http.ListenAndServeTLS(":443", "localhost.crt", "server.key", s); err != nil {
 		panic(err)
 	}
