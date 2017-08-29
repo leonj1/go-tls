@@ -1,0 +1,8 @@
+version: "2"
+services:
+  tls:
+    image: go-tls:0.1
+    restart: always
+    ports:
+     - "5000:443"
+
