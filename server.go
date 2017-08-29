@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"io/ioutil"
 	"fmt"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 //func Run(addr string, sslAddr string, ssl map[string]string, insecureHandler, secureHandler http.Handler) chan error {
@@ -104,6 +105,12 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 }
 
 func main() {
+	log.SetOutput(&lumberjack.Logger{
+		Filename:   "/tmp/tls.log",
+		MaxSize:    5, // megabytes
+		MaxBackups: 3,
+		MaxAge:     3, //days
+	})
 	// Concurrent HashMap
 	bar := cmap.New()
 	foo := &MyConcurrentMap{cMap: &bar}
