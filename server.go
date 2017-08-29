@@ -111,7 +111,7 @@ func main() {
 		MaxBackups: 3,
 		MaxAge:     3, //days
 	})
-	// Concurrent HashMap
+		// Concurrent HashMap
 	bar := cmap.New()
 	foo := &MyConcurrentMap{cMap: &bar}
 	s := mux.NewRouter()
